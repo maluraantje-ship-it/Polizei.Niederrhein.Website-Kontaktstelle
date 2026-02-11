@@ -1,27 +1,186 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Polizei Niederrhein</title>
-  <style>
-    body {
-      background-color: #0b1d33;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding-top: 100px;
-    }
-    h1 {
-      font-size: 48px;
-    }
-    p {
-      font-size: 20px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Ostdeutsche Polizei – Karriere</title>
+<style>
+html, body { margin:0; padding:0; height:100%; font-family:Arial, sans-serif; background: radial-gradient(circle at top, #1e90ff, #020b24); }
+body { display:flex; justify-content:center; align-items:flex-start; color:white; }
+.container { text-align:center; background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); border-radius: 20px; padding:40px; width:600px; margin:20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+h1 { font-size:48px; margin-bottom:30px; }
+h2 { font-size:32px; margin-bottom:20px; }
+button { font-size:22px; padding:20px 40px; margin:10px; border:none; border-radius:12px; cursor:pointer; background: linear-gradient(135deg, #1e90ff, #00c6ff); color:white; box-shadow:0 0 20px rgba(30,144,255,0.7); transition:0.3s; }
+button:hover { box-shadow:0 0 30px rgba(0,255,255,0.9); transform:scale(1.05); }
+input, textarea { width:100%; padding:12px; margin:8px 0; border-radius:10px; border:none; }
+.hidden { display:none; }
+.nav { position:fixed; top:15px; left:15px; }
+</style>
 </head>
 <body>
-  <h1>Website läuft 🚓</h1>
-  <p>GitHub Pages ist aktiv.</p>
+
+<div class="nav">
+  <button onclick="history.back()">⬅</button>
+  <button onclick="history.forward()">➡</button>
+</div>
+
+<div class="container" id="start">
+  <h1>Ostdeutsche Polizei</h1>
+  <button onclick="showSection('beamten')">Beamten Anmeldung</button>
+  <button onclick="showSection('karriere')">Karriere</button>
+  <button onclick="showSection('aktensystem')">Aktensystem</button>
+</div>
+
+<div class="container hidden" id="beamten">
+  <h2>Beamten Login</h2>
+  <input id="pw" placeholder="Passwort">
+  <button onclick="loginBeamten()">Einloggen</button>
+  <div id="adminArea" class="hidden">
+    <h3>Alle Bewerbungen</h3>
+    <ul id="applications"></ul>
+    <button onclick="toggleOpen(true)">Bewerbungen Öffnen (Code 1225)</button>
+    <button onclick="toggleOpen(false)">Bewerbungen Schließen (Code 1225)</button>
+  </div>
+</div>
+
+<div class="container hidden" id="karriere">
+  <h2>Karriere</h2>
+  <button onclick="showSection('bewerbung')">Bewerbung</button>
+  <button onclick="showSection('status')">Bewerbungsstatus</button>
+  <button onclick="showSection('info')">Informationen</button>
+</div>
+
+<div class="container hidden" id="bewerbung">
+  <h2>Bewerbung – Ostdeutsche Polizei</h2>
+  <form onsubmit="submitApplication(event)">
+    <input placeholder="Name (Dein Vorname)" required>
+    <input placeholder="Alter (Dein Alter)" required>
+    <input placeholder="Discord-Tag (Name#0000)" required>
+    <input placeholder="Onlinezeiten (z.B. Werktags 18–22 Uhr)" required>
+    <input placeholder="RP-Erfahrung (Warst du schon Polizist?)" required>
+    <textarea placeholder="Anschreiben (Sehr geehrte Polizei...)" required></textarea>
+    <textarea placeholder="Lebenslauf (alle Fragen einzeln in Klammern)" required></textarea>
+    <button type="submit">Abschicken</button>
+  </form>
+  <p id="codeOutput"></p>
+</div>
+
+<div class="container hidden" id="status">
+  <h2>Bewerbungsstatus</h2>
+  <input id="statusCode" placeholder="Dein Bewerbungs-Code">
+  <button onclick="checkStatus()">Status prüfen</button>
+  <p id="statusResult"></p>
+</div>
+
+<div class="container hidden" id="info">
+  <h2>Informationen</h2>
+  <p>Gib deinen Bewerbungs-Code ein, um den Status deiner Bewerbung zu prüfen.</p>
+</div>
+
+<div class="container hidden" id="aktensystem">
+  <h2>Aktensystem</h2>
+  <input id="aktenPw" placeholder="Passwort">
+  <button onclick="loginAktensystem()">Einloggen</button>
+  <div id="aktenArea" class="hidden">
+    <h3>Alle Einträge</h3>
+    <ul id="aktenList"></ul>
+    <textarea id="newEntry" placeholder="Neuen Eintrag hinzufügen..."></textarea>
+    <button onclick="addEntry()">Hinzufügen</button>
+  </div>
+</div>
+
+<script>
+let apps = [];
+let open = true;
+let aktensystem = [];
+
+function showSection(id){
+  ['karriere','bewerbung','status','info','beamten','aktensystem'].forEach(c=>document.getElementById(c).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// Bewerbungen
+function submitApplication(e){
+  e.preventDefault();
+  if(!open){ alert('Bewerbungen sind geschlossen!'); return; }
+  const code = Math.random().toString(36).substring(2,8).toUpperCase();
+  apps.push({code:code, status:'In Arbeit'});
+  document.getElementById('codeOutput').innerText = 'Dein Bewerbungs-Code: ' + code;
+}
+
+function checkStatus(){
+  const c = document.getElementById('statusCode').value;
+  const app = apps.find(a=>a.code===c);
+  document.getElementById('statusResult').innerText = app ? 'Status: ' + app.status : 'Code nicht gefunden';
+}
+
+function loginBeamten(){
+  const pw = document.getElementById('pw').value;
+  if(pw==='1224'){
+    document.getElementById('adminArea').classList.remove('hidden');
+    updateList();
+    alert('Beamtenbereich geöffnet!');
+  } else { alert('Falsches Passwort'); }
+}
+
+function updateList(){
+  const ul = document.getElementById('applications');
+  ul.innerHTML='';
+  apps.forEach(a=>{
+    const li = document.createElement('li');
+    li.innerHTML = a.code + ' - ' + a.status +
+      ' <button onclick="setStatus(\''+a.code+'\','\'Angenommen\')">Annehmen</button>' +
+      ' <button onclick="setStatus(\''+a.code+'\','\'Abgelehnt\')">Ablehnen</button>';
+    ul.appendChild(li);
+  });
+}
+
+function setStatus(code,status){
+  const app = apps.find(a=>a.code===code);
+  if(app){ app.status=status; updateList(); }
+}
+
+function toggleOpen(val){
+  const pw = prompt('Code eingeben (nur 1225 gültig)');
+  if(pw==='1225'){ open=val; alert(val?'Bewerbungen geöffnet':'Bewerbungen geschlossen'); }
+  else { alert('Ungültiger Code!'); }
+}
+
+// Aktensystem
+function loginAktensystem(){
+  const pw = document.getElementById('aktenPw').value;
+  if(pw==='333563'){
+    document.getElementById('aktenArea').classList.remove('hidden');
+    updateAktenList();
+    alert('Aktensystem geöffnet!');
+  } else { alert('Falsches Passwort'); }
+}
+
+function updateAktenList(){
+  const ul = document.getElementById('aktenList');
+  ul.innerHTML='';
+  aktensystem.forEach((e,i)=>{
+    const li = document.createElement('li');
+    li.innerHTML = e + ' <button onclick="deleteEntry('+i+')">Löschen</button>';
+    ul.appendChild(li);
+  });
+}
+
+function addEntry(){
+  const val = document.getElementById('newEntry').value.trim();
+  if(val===''){ alert('Eintrag leer!'); return; }
+  aktensystem.push(val);
+  console.log('Neuer Eintrag hinzugefügt:', val);
+  document.getElementById('newEntry').value='';
+  updateAktenList();
+}
+
+function deleteEntry(i){
+  console.log('Eintrag gelöscht:', aktensystem[i]);
+  aktensystem.splice(i,1);
+  updateAktenList();
+}
+
+</script>
+
 </body>
 </html>
-
