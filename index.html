@@ -15,11 +15,7 @@
             --success: #aaff77;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; }
 
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -97,19 +93,11 @@
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
             box-shadow: 0 10px 30px rgba(0, 80, 200, 0.4);
-            position: relative;
-            overflow: hidden;
         }
 
         .main-btn:hover {
             transform: translateY(-7px);
-            box-shadow: 0 20px 45px rgba(0, 80, 200, 0.6),
-                        0 0 35px var(--glow);
-        }
-
-        .main-btn:active {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 80, 200, 0.45);
+            box-shadow: 0 20px 45px rgba(0, 80, 200, 0.6), 0 0 35px var(--glow);
         }
 
         .main-btn:disabled {
@@ -147,10 +135,7 @@
             background: rgba(255,255,255,0.14);
         }
 
-        textarea {
-            min-height: 160px;
-            resize: vertical;
-        }
+        textarea { min-height: 160px; resize: vertical; }
 
         .list-item {
             background: rgba(255,255,255,0.09);
@@ -161,26 +146,15 @@
             text-align: left;
         }
 
-        .list-item p {
-            margin: 0.6rem 0;
-        }
+        .list-item p { margin: 0.6rem 0; }
 
-        #bewerbung-code, #status-result {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: var(--success);
-            margin: 1.8rem 0;
-            padding: 1.2rem;
-            background: rgba(0,0,0,0.35);
-            border-radius: 1.2rem;
-            text-align: center;
-        }
-
-        .error {
-            color: var(--error);
+        #search-akten {
             font-size: 1.3rem;
-            margin: 1rem 0;
+            margin-bottom: 1.5rem;
+            max-width: 600px;
         }
+
+        .error { color: var(--error); font-size: 1.3rem; margin: 1rem 0; }
 
         .hidden { display: none !important; }
 
@@ -238,11 +212,14 @@
 
     <div class="container hidden" id="akten-panel">
         <h1>Aktensystem</h1>
+        <input type="text" id="search-akten" placeholder="Akten suchen (Name oder Inhalt)..." oninput="filterAkten()">
+        
         <input type="text" id="akten-name" placeholder="Aktenname / Betreff">
-        <textarea id="akten-content" placeholder="Inhalt der Akte" rows="6"></textarea>
+        <textarea id="akten-content" placeholder="Inhalt der Akte" rows="5"></textarea>
         <button class="main-btn" onclick="addAkten()">Akten hinzufügen</button>
+        
         <div id="akten-list"></div>
-        <div id="logs-list"><h2 style="margin: 2rem 0 1rem;">Logs</h2></div>
+        <div id="logs-list"><h2 style="margin: 2.5rem 0 1rem;">Logs</h2></div>
         <button class="main-btn secondary-btn" onclick="logoutAkten()">Zurück</button>
     </div>
 
@@ -285,16 +262,18 @@
     </div>
 
     <script>
-        // === KONFIGURATION ===
-        const BEAMTEN_PW     = '1224';
-        const OPEN_CLOSE_PW  = '1225';   // bleibt absichtlich ungültig
-        const AKTEN_PW       = '333563';
+        // KONFIGURATION
+        const BEAMTEN_PW    = '1224';
+        const OPEN_CLOSE_PW = '1225';   // bleibt ungültig
+        const AKTEN_PW      = '333563';
 
         // localStorage Initialisierung
         if (!localStorage.getItem('applications')) localStorage.setItem('applications', JSON.stringify([]));
         if (!localStorage.getItem('applicationsOpen')) localStorage.setItem('applicationsOpen', 'true');
         if (!localStorage.getItem('akten')) localStorage.setItem('akten', JSON.stringify([]));
         if (!localStorage.getItem('logs')) localStorage.setItem('logs', JSON.stringify([]));
+
+        let allAkten = JSON.parse(localStorage.getItem('akten')) || [];
 
         function showSection(id) {
             document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
@@ -319,17 +298,16 @@
         function showOpenClose() { showSection('open-close'); }
         function toggleApplications() {
             const code = document.getElementById('open-close-code').value;
-            const errorEl = document.getElementById('open-close-error');
-            errorEl.textContent = code === OPEN_CLOSE_PW 
-                ? 'Dieser Code ist derzeit nicht freigeschaltet / ungültig.'
-                : 'Ungültiger Code.';
+            document.getElementById('open-close-error').textContent = 
+                code === OPEN_CLOSE_PW ? 'Code derzeit nicht freigeschaltet.' : 'Ungültiger Code.';
         }
 
         function showAktenLogin() { showSection('akten-login'); }
         function loginAkten() {
             if (document.getElementById('akten-pw').value === AKTEN_PW) {
                 showSection('akten-panel');
-                loadAkten();
+                allAkten = JSON.parse(localStorage.getItem('akten')) || [];
+                loadAkten();    // alle anzeigen beim Öffnen
                 loadLogs();
             } else {
                 document.getElementById('akten-error').textContent = 'Falsches Passwort!';
@@ -340,43 +318,62 @@
         function addAkten() {
             const name = document.getElementById('akten-name').value.trim();
             const content = document.getElementById('akten-content').value.trim();
-            if (!name || !content) return alert('Bitte beide Felder ausfüllen.');
-            
-            const akten = JSON.parse(localStorage.getItem('akten'));
-            akten.push({ name, content });
-            localStorage.setItem('akten', JSON.stringify(akten));
+            if (!name || !content) return alert('Name und Inhalt dürfen nicht leer sein.');
+
+            allAkten.push({ name, content });
+            localStorage.setItem('akten', JSON.stringify(allAkten));
             logAction(`Akten '${name}' hinzugefügt`);
-            loadAkten();
+
             document.getElementById('akten-name').value = '';
             document.getElementById('akten-content').value = '';
+            document.getElementById('search-akten').value = ''; // Suche zurücksetzen
+            loadAkten(); // alle wieder anzeigen
         }
 
         function deleteAkten(index) {
-            const akten = JSON.parse(localStorage.getItem('akten'));
-            const deletedName = akten[index].name;
-            akten.splice(index, 1);
-            localStorage.setItem('akten', JSON.stringify(akten));
+            const deletedName = allAkten[index].name;
+            allAkten.splice(index, 1);
+            localStorage.setItem('akten', JSON.stringify(allAkten));
             logAction(`Akten '${deletedName}' gelöscht`);
             loadAkten();
         }
 
-        function loadAkten() {
+        function filterAkten() {
+            const search = document.getElementById('search-akten').value.toLowerCase().trim();
+            loadAkten(search);
+        }
+
+        function loadAkten(filter = '') {
             const list = document.getElementById('akten-list');
             list.innerHTML = '<h2 style="margin: 2rem 0 1rem;">Aktuelle Akten</h2>';
-            JSON.parse(localStorage.getItem('akten')).forEach((akt, i) => {
+
+            const filtered = allAkten.filter(akt => 
+                akt.name.toLowerCase().includes(filter) || 
+                akt.content.toLowerCase().includes(filter)
+            );
+
+            if (filtered.length === 0 && filter) {
+                list.innerHTML += '<p style="color:#aaa; padding:1rem;">Keine Akten gefunden.</p>';
+            }
+
+            filtered.forEach((akt, globalIndex) => {
+                // Index im gefilterten Array ≠ globaler Index → wir suchen den echten Index
+                const realIndex = allAkten.indexOf(akt);
+
                 const div = document.createElement('div');
                 div.className = 'list-item';
                 div.innerHTML = `
                     <strong style="font-size:1.3rem;">${akt.name}</strong>
-                    <p style="white-space:pre-wrap; margin-top:0.8rem;">${akt.content}</p>
-                    <button class="main-btn" style="font-size:1.1rem; padding:0.8rem 1.6rem; margin-top:1rem;" onclick="deleteAkten(${i})">Löschen</button>
+                    <p style="white-space:pre-wrap; margin:0.8rem 0;">${akt.content}</p>
+                    <button class="main-btn" style="font-size:1.1rem; padding:0.8rem 1.6rem; margin-top:0.8rem;" 
+                            onclick="deleteAkten(${realIndex})">Löschen</button>
                 `;
                 list.appendChild(div);
             });
         }
 
         function logAction(action) {
-            const logs = JSON.parse(localStorage.getItem('logs'));
+            const logs = JSON.parse(localStorage.getItem('logs')) || [];
             logs.push({ date: new Date().toLocaleString('de-DE'), action });
             localStorage.setItem('logs', JSON.stringify(logs));
             loadLogs();
@@ -384,14 +381,19 @@
 
         function loadLogs() {
             const list = document.getElementById('logs-list');
-            list.innerHTML = '<h2 style="margin: 2rem 0 1rem;">Logs</h2>';
-            JSON.parse(localStorage.getItem('logs')).forEach(log => {
+            list.innerHTML = '<h2 style="margin: 2.5rem 0 1rem;">Logs</h2>';
+            const logs = JSON.parse(localStorage.getItem('logs')) || [];
+            logs.forEach(log => {
                 const p = document.createElement('p');
-                p.style.margin = '0.5rem 0';
+                p.style.margin = '0.6rem 0';
                 p.textContent = `${log.date}: ${log.action}`;
                 list.appendChild(p);
             });
         }
+
+        // ────────────────────────────────────────────────
+        // Rest des Codes (Bewerbungen, Status etc.) bleibt gleich
+        // ────────────────────────────────────────────────
 
         function showKarriere() { showSection('karriere'); updateBewerbungButton(); }
 
@@ -416,14 +418,14 @@
                 status: 'In Arbeit'
             };
 
-            if (!data.name || !data.alter) return alert('Bitte mindestens Name und Alter ausfüllen.');
+            if (!data.name || !data.alter) return alert('Mindestens Name und Alter ausfüllen.');
 
             const apps = JSON.parse(localStorage.getItem('applications'));
             apps.push(data);
             localStorage.setItem('applications', JSON.stringify(apps));
 
             document.getElementById('bewerbung-code').innerHTML = 
-                `Bewerbung erfolgreich eingereicht!<br><strong>Dein Code: ${data.id}</strong><br>Merke ihn dir – du brauchst ihn für den Status-Check.`;
+                `Bewerbung erfolgreich!<br><strong>Dein Code: ${data.id}</strong><br>Merke ihn dir gut.`;
             document.getElementById('bewerbung-form').reset();
         }
 
@@ -437,17 +439,13 @@
         function showInformationen() { showSection('informationen'); }
 
         function checkStatus() {
-            const codeStr = document.getElementById('info-code').value.trim();
-            const code = parseInt(codeStr);
-            if (!code || isNaN(code)) {
-                document.getElementById('status-result').textContent = 'Bitte einen gültigen numerischen Code eingeben.';
-                return;
-            }
-
+            const code = parseInt(document.getElementById('info-code').value);
+            if (!code) return document.getElementById('status-result').textContent = 'Bitte Code eingeben.';
+            
             const app = JSON.parse(localStorage.getItem('applications')).find(a => a.id === code);
             document.getElementById('status-result').textContent = app 
-                ? `Dein Bewerbungsstatus: ${app.status}`
-                : 'Kein Eintrag zu diesem Code gefunden.';
+                ? `Status: ${app.status}`
+                : 'Code nicht gefunden.';
         }
 
         function loadApplications() {
@@ -464,7 +462,7 @@
                     <p><strong>RP:</strong> ${app.rp}</p>
                     <p><strong>Anschreiben:</strong><br><span style="white-space:pre-wrap;">${app.anschreiben}</span></p>
                     <p><strong>Lebenslauf:</strong><br><span style="white-space:pre-wrap;">${app.lebenslauf}</span></p>
-                    <p style="font-weight:bold; margin:1rem 0 0.5rem;">Status: ${app.status}</p>
+                    <p style="font-weight:bold; margin:1.2rem 0 0.6rem;">Status: ${app.status}</p>
                     <button class="main-btn" style="font-size:1.1rem; padding:0.8rem 1.6rem;" onclick="changeStatus(${i}, 'Angenommen')">Annehmen</button>
                     <button class="main-btn" style="font-size:1.1rem; padding:0.8rem 1.6rem; background:linear-gradient(145deg,#dc3545,#a71d2a);" onclick="changeStatus(${i}, 'Abgelehnt')">Ablehnen</button>
                 `;
@@ -480,11 +478,11 @@
         }
 
         function updateBewerbungButton() {
-            const btn = document.getElementById('bewerbung-btn');
-            btn.disabled = localStorage.getItem('applicationsOpen') !== 'true';
+            document.getElementById('bewerbung-btn').disabled = 
+                localStorage.getItem('applicationsOpen') !== 'true';
         }
 
-        // Initialisierung
+        // Start
         updateBewerbungButton();
     </script>
 </body>
