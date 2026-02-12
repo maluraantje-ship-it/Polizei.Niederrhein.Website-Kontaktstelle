@@ -10,8 +10,7 @@
             --primary-dark: #0044cc;
             --glow: rgba(0, 102, 255, 0.45);
             --text: #f0f4ff;
-            --bg-start: #0a1f4a;
-            --bg-end: #001f3f;
+            --card-bg: rgba(10, 25, 60, 0.78);
             --error: #ff6b6b;
             --success: #aaff77;
         }
@@ -24,9 +23,11 @@
 
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
             color: var(--text);
             min-height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.75)),
+                        url('https://files.catbox.moe/0z3z0k.jpg') center/cover no-repeat fixed;
+            background-blend-mode: multiply;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -43,7 +44,7 @@
             z-index: 1000;
             display: flex;
             gap: 1.2rem;
-            background: rgba(10, 25, 60, 0.4);
+            background: rgba(10, 25, 60, 0.55);
             backdrop-filter: blur(16px);
             padding: 0.8rem 1.8rem;
             border-radius: 999px;
@@ -67,7 +68,7 @@
         }
 
         .container {
-            background: rgba(10, 25, 60, 0.78);
+            background: var(--card-bg);
             backdrop-filter: blur(14px);
             border-radius: 1.4rem;
             padding: 2.8rem 2.4rem;
